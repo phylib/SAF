@@ -8,6 +8,7 @@ NS_LOG_COMPONENT_DEFINE("SAFForwardingTable");
 
 SAFForwardingTable::SAFForwardingTable(std::vector<int> faceIds, std::map<int, int> preferedFacesIds)
 {
+  randomVariable = ::ns3::CreateObject<::ns3::UniformRandomVariable>();
   for(int i = 0; i < (int)ParameterConfiguration::getInstance ()->getParameter ("MAX_LAYERS"); i++)
     curReliability[i]=ParameterConfiguration::getInstance ()->getParameter ("RELIABILITY_THRESHOLD_MAX");
 
@@ -592,7 +593,7 @@ matrix<double> SAFForwardingTable::normalizeColumns(matrix<double> m)
 
 int SAFForwardingTable::chooseFaceAccordingProbability(matrix<double> m, int ilayer, std::vector<int> faceList)
 {
-  double rvalue = randomVariable.GetValue ();
+  double rvalue = randomVariable->GetValue ();
   double sum = 0.0;
 
   if(faceList.size () != m.size1 ())

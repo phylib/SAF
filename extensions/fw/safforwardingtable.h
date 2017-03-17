@@ -20,7 +20,8 @@
 
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/io.hpp>
-#include "ns3/random-variable.h"
+#include "ns3/random-variable-stream.h"
+#include "ns3/ptr.h"
 
 #include "../utils/parameterconfiguration.h"
 #include "safstatisticmeasure.h"
@@ -113,7 +114,7 @@ public:
   std::vector<int> faces;
   std::map<int /*faceId*/,int/*costs/metric*/> preferedFaces;
   std::map<int /*layer*/,double/*reliabilty*/> curReliability;
-  ns3::UniformVariable randomVariable;
+  ::ns3::Ptr<::ns3::UniformRandomVariable> randomVariable;
 
   std::map<int /*layer*/,int/*steps_left*/> observed_layers;
 };
