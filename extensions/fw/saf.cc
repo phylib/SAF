@@ -92,9 +92,9 @@ void SAF::afterReceiveInterest(const Face& inFace, const Interest& interest ,sha
 
 void SAF::beforeSatisfyInterest(shared_ptr<pit::Entry> pitEntry,const Face& inFace, const Data& data)
 {  
-  const std::list<nfd::pit::OutRecord> outRecords = pitEntry->getOutRecords ();
-  for(nfd::pit::OutRecordCollection::const_iterator it = outRecords.begin (); it!=outRecords.end (); ++it)
-  {
+
+  const pit::OutRecordCollection& records = pitEntry->getOutRecords();
+  for (auto it = records.begin(); it != records.end(); it++) {
     if((*it).getFace()->getId() != inFace.getId ())
       engine->logNack ((*getFaceTable ().get((*it).getFace()->getId())), pitEntry->getInterest()); //its not a nack but this log has the same effect
   }
@@ -127,10 +127,11 @@ std::vector<int> SAF::getAllInFaces(shared_ptr<pit::Entry> pitEntry)
 std::vector<int> SAF::getAllOutFaces(shared_ptr<pit::Entry> pitEntry)
 {
   std::vector<int> faces;
-  const nfd::pit::OutRecordCollection records = pitEntry->getOutRecords();
 
-  for(nfd::pit::OutRecordCollection::const_iterator it = records.begin (); it!=records.end (); ++it)
+  const pit::OutRecordCollection& records = pitEntry->getOutRecords();
+  for (auto it = records.begin(); it != records.end(); it++) {
     faces.push_back((*it).getFace()->getId());
+  }
 
   return faces;
 }
