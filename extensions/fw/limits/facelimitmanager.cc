@@ -54,27 +54,28 @@ void  FaceLimitManager::newToken()
 
 uint64_t FaceLimitManager::getPhysicalBitrate(shared_ptr< Face > face)
 {
-  if(ns3::ndn::NetDeviceFace *netf = dynamic_cast<ns3::ndn::NetDeviceFace*>(&(*face)))
-  {
-    /*ns3::Ptr<ns3::Node> node = netf->GetNetDevice()->GetNode ();
-    fprintf(stderr, "faceId = %d\n", netf->getId ());
-    for(int i = 0; i < node->GetNDevices (); i++)
-    {
-      fprintf(stderr, "Device[%d] found\n", i);
-    }
-    fprintf(stderr, "\n");*/
-    //-256 because 0-255 is resevred by ndn local faces;
-    ns3::Ptr<ns3::PointToPointNetDevice> nd1 = netf->GetNetDevice()->GetNode ()->GetDevice(netf->getId () - 256)->GetObject<ns3::PointToPointNetDevice>();
-    ns3::DataRateValue dv;
-    nd1->GetAttribute("DataRate", dv);
-    ns3::DataRate d = dv.Get();
-    //fprintf(stderr, "bitrate on face = %llu\n", d.GetBitRate());
-    return d.GetBitRate();
-  }
-  else
-  {
+  //if(ns3::ndn::NetDeviceFace *netf = dynamic_cast<ns3::ndn::NetDeviceFace*>(&(*face)))
+  //{
+  //  /*ns3::Ptr<ns3::Node> node = netf->GetNetDevice()->GetNode ();
+  //  fprintf(stderr, "faceId = %d\n", netf->getId ());
+  //  for(int i = 0; i < node->GetNDevices (); i++)
+  //  {
+  //    fprintf(stderr, "Device[%d] found\n", i);
+  //  }
+  //  fprintf(stderr, "\n");*/
+  //  //-256 because 0-255 is resevred by ndn local faces;
+  //  ns3::Ptr<ns3::PointToPointNetDevice> nd1 = netf->GetNetDevice()->GetNode ()->GetDevice(netf->getId () - 256)->GetObject<ns3::PointToPointNetDevice>();
+  //  ns3::DataRateValue dv;
+  //  nd1->GetAttribute("DataRate", dv);
+  //  ns3::DataRate d = dv.Get();
+  //  //fprintf(stderr, "bitrate on face = %llu\n", d.GetBitRate());
+  //  return d.GetBitRate();
+  //}
+  //else
+  //{
+  // todo: reactivate method
     return ULONG_MAX;
-  }
+  //}
 }
 
 std::vector<std::string> FaceLimitManager::getAllNonFullBuckets()

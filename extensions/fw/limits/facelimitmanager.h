@@ -31,7 +31,7 @@
 #include "ns3-dev/ns3/point-to-point-module.h"
 #include "ns3-dev/ns3/network-module.h"
 #include "ns3/simple-ref-count.h"
-#include "ns3/ndnSIM/model/ndn-net-device-face.hpp"
+//#include "ns3/ndnSIM/model/ndn-net-device-face.hpp"
 
 #include "limiter.h"
 
