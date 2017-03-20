@@ -18,9 +18,8 @@ void Mratio::logExpiredInterest(shared_ptr<pit::Entry> pitEntry)
 {
   int ilayer = SAFStatisticMeasure::determineContentLayer(pitEntry->getInterest());
 
-  const nfd::pit::OutRecordCollection records = pitEntry->getOutRecords();
-  for(nfd::pit::OutRecordCollection::const_iterator it = records.begin (); it!=records.end (); ++it)
-  {
+  const pit::OutRecordCollection& records = pitEntry->getOutRecords();
+  for (auto it = records.begin(); it != records.end(); it++) {
     //fprintf(stderr, "Timeout loged on face %d\n",(*it).getFace()->getId());
     stats[ilayer].unsatisfied_requests[(*it).getFace()->getId()] += 1;
   }
