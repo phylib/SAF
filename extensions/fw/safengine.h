@@ -24,6 +24,7 @@
 #include "limits/facelimitmanager.h"
 #include "ns3/names.h"
 #include "ns3/log.h"
+#include "ns3/ndnSIM/ndn-cxx/encoding/nfd-constants.hpp"
 #include "safentry.h"
 
 namespace nfd
@@ -105,7 +106,6 @@ public:
 protected:
   void initFaces(const nfd::FaceTable& table);
   std::string extractContentPrefix(nfd::Name name);
-  void determineNodeName(const nfd::FaceTable& table);
   std::vector<int> faces;
 
   void update();

@@ -118,7 +118,7 @@ std::vector<int> SAF::getAllInFaces(shared_ptr<pit::Entry> pitEntry)
 
   for(nfd::pit::InRecordCollection::const_iterator it = records.begin (); it!=records.end (); ++it)
   {
-    if(! (*it).getFace()->isLocal())
+    if(! (*it).getFace()->getScope() == ::ndn::nfd::FaceScope::FACE_SCOPE_LOCAL)
       faces.push_back((*it).getFace()->getId());
   }
   return faces;

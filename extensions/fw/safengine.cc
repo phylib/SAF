@@ -24,14 +24,13 @@ void SAFEngine::initFaces(const nfd::FaceTable& table)
   for(nfd::FaceTable::const_iterator it = table.begin (); it != table.end (); ++it)
   {
     //if((*it)->isLocal())
-    if((*it)->getId() <= nfd::FACEID_RESERVED_MAX) //SAF is not used for management faces
+    if((*it)->getId() <= face::FACEID_RESERVED_MAX) //SAF is not used for management faces
       continue;
     faces.push_back((*it)->getId());
     fbMap[(*it)->getId()] = boost::shared_ptr<FaceLimitManager>(new FaceLimitManager(*it));
   }
 
   std::sort(faces.begin(), faces.end());
-  determineNodeName(table);
 }
 
 int SAFEngine::determineNextHop(const Interest& interest, std::vector<int> alreadyTriedFaces, shared_ptr<fib::Entry> fibEntry)
@@ -56,7 +55,7 @@ int SAFEngine::determineNextHop(const Interest& interest, std::vector<int> alrea
 
 bool SAFEngine::tryForwardInterest(const Interest& interest, shared_ptr<Face> outFace)
 {
-  if( dynamic_cast<ns3::ndn::NetDeviceFace*>(&(*outFace)) == NULL) //check if its a NetDevice
+  if( outFace->getScope() == ::ndn::nfd::FaceScope::FACE_SCOPE_NONE || outFace->getScope() == ::ndn::nfd::FaceScope::FACE_SCOPE_LOCAL ) //check if its a NetDevice
   {
     return true;
   }
@@ -152,22 +151,9 @@ std::string SAFEngine::extractContentPrefix(nfd::Name name)
   return prefix;
 }
 
-void SAFEngine::determineNodeName(const nfd::FaceTable& table)
-{
-  for(nfd::FaceTable::const_iterator it = table.begin (); it != table.end (); ++it)
-  {
-    if(ns3::ndn::NetDeviceFace* netf = dynamic_cast<ns3::ndn::NetDeviceFace*>(&(*(*it))))
-    {
-      nodeName = ns3::Names::FindName(netf->GetNetDevice()->GetNode());
-      return;
-    }
-  }
-  nodeName = "UnknownNode";
-}
-
 void SAFEngine::addFace(shared_ptr<Face> face)
 {
-  if(face->getId() <= nfd::FACEID_RESERVED_MAX) //SAF is not used for management faces
+  if(face->getId() <= face::FACEID_RESERVED_MAX) //SAF is not used for management faces
     return;
 
   faces.push_back(face->getId());
@@ -190,7 +176,7 @@ void SAFEngine::addFace(shared_ptr<Face> face)
 
 void SAFEngine::removeFace(shared_ptr<Face> face)
 {
-  if(face->getId() <= nfd::FACEID_RESERVED_MAX) //SAF is not used for management faces
+  if(face->getId() <= face::FACEID_RESERVED_MAX) //SAF is not used for management faces
     return;
 
   for(SAFEntryMap::iterator it = entryMap.begin (); it != entryMap.end (); ++it)
