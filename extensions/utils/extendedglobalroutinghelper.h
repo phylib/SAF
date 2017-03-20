@@ -35,7 +35,6 @@
 
 #include "model/ndn-l3-protocol.hpp"
 #include "helper/ndn-fib-helper.hpp"
-#include "model/ndn-net-device-face.hpp"
 #include "model/ndn-global-router.hpp"
 
 #include "daemon/table/fib.hpp"
