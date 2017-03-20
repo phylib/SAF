@@ -41,11 +41,17 @@ public:
   virtual void beforeSatisfyInterest(shared_ptr<pit::Entry> pitEntry,const nfd::Face& inFace, const ndn::Data& data);
   virtual void beforeExpirePendingInterest(shared_ptr< pit::Entry > pitEntry);
 
+  virtual void
+  afterReceiveNack(const Face& inFace, const lp::Nack& nack,
+                   shared_ptr<fib::Entry> fibEntry,
+                   shared_ptr<pit::Entry> pitEntry) DECL_OVERRIDE;
+
   static const Name STRATEGY_NAME;
 
 protected:
   std::vector<int> getAllInFaces(shared_ptr<pit::Entry> pitEntry);
   std::vector<int> getAllOutFaces(shared_ptr<pit::Entry> pitEntry);
+  void sendNACKToAllInFaces(shared_ptr<pit::Entry> pitEntry);
 
   bool isRtx(const nfd::Face& inFace, const ndn::Interest&interest);
   void addToKnownInFaces(const nfd::Face& inFace, const ndn::Interest&interest);

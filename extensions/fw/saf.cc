@@ -3,6 +3,8 @@
 using namespace nfd;
 using namespace nfd::fw;
 
+NFD_LOG_INIT("SAF");
+
 const Name SAF::STRATEGY_NAME("ndn:/localhost/nfd/strategy/saf");
 
 SAF::SAF(Forwarder &forwarder, const Name &name) : Strategy(forwarder, name)
@@ -33,17 +35,11 @@ void SAF::afterReceiveInterest(const Face& inFace, const Interest& interest ,sha
   //fprintf(stderr, "In f[%d]= %s\n", inFace.getId (),interest.getName ().toUri ().c_str ());
 
   //find + exclude inface(s) and already tried outface(s)
+  NFD_LOG_DEBUG(interest << " from=" << inFace.getId());
   std::vector<int> originInFaces = getAllInFaces(pitEntry);
   std::vector<int> alreadyTriedFaces; // keep them empty for now and check if nack or retransmission?
 
-  std::string prefix = interest.getName().get(0).toUri();
-  if(prefix.compare("NACK") == 0)
-  {
-    //fprintf(stderr, "Received Nack %s on face[%d]\n", interest.getName().toUri().c_str(), inFace.getId ());
-    //engine->logNack(inFace, pitEntry->getInterest()); //this is not needed anymore as we count this on beforeStatisfyInterest/rejectInterest
-    alreadyTriedFaces = getAllOutFaces(pitEntry);
-  }
-  else if(pitEntry->hasUnexpiredOutRecords() && ParameterConfiguration::getInstance ()->getParameter ("RTX_DETECTION") > 0) //possible rtx or just the same request from a "different" source (experimental)
+  if (pitEntry->hasUnexpiredOutRecords() && ParameterConfiguration::getInstance ()->getParameter ("RTX_DETECTION") > 0)
   {
     if(isRtx(inFace, interest))
     {
@@ -53,12 +49,10 @@ void SAF::afterReceiveInterest(const Face& inFace, const Interest& interest ,sha
     {
       addToKnownInFaces(inFace, interest); // maybe other client/node requests same content?
       return;
-    }
+    } 
   }
 
-  //if it wasnt a nack log the inface
-  if(prefix.compare("NACK") != 0)
-    addToKnownInFaces(inFace, interest);
+  addToKnownInFaces(inFace, interest);
 
   const Interest int_to_forward = pitEntry->getInterest();
   int nextHop = engine->determineNextHop(int_to_forward, alreadyTriedFaces, fibEntry);
@@ -87,6 +81,8 @@ void SAF::afterReceiveInterest(const Face& inFace, const Interest& interest ,sha
   }
   engine->logRejectedInterest(pitEntry, nextHop);
   clearKnownFaces(int_to_forward);
+  NFD_LOG_DEBUG(interest << " Send NACK");
+  sendNACKToAllInFaces(pitEntry);
   rejectPendingInterest(pitEntry);
 }
 
@@ -111,6 +107,52 @@ void SAF::beforeExpirePendingInterest(shared_ptr< pit::Entry > pitEntry)
   Strategy::beforeExpirePendingInterest (pitEntry);
 }
 
+
+
+void
+SAF::afterReceiveNack(const Face& inFace, const lp::Nack& nack,
+                                     shared_ptr<fib::Entry> fibEntry,
+                                     shared_ptr<pit::Entry> pitEntry)
+{
+  // Adapted code from afterReceiveInterest (Part for Interests-Only deleted)
+  NFD_LOG_DEBUG("NACK from=" << inFace.getId());
+
+  std::vector<int> originInFaces = getAllInFaces(pitEntry);
+  std::vector<int> alreadyTriedFaces; // keep them empty for now and check if nack or retransmission?
+
+  alreadyTriedFaces = getAllOutFaces(pitEntry);
+
+  const Interest int_to_forward = pitEntry->getInterest();
+  int nextHop = engine->determineNextHop(int_to_forward, alreadyTriedFaces, fibEntry);
+  while(nextHop != DROP_FACE_ID && (std::find(originInFaces.begin (),originInFaces.end (), nextHop) == originInFaces.end ()))
+  {
+    bool success = engine->tryForwardInterest (int_to_forward, getFaceTable ().get (nextHop));
+
+    /*DISABLING LIMITS FOR NOW*/
+    success = true; // as not used in the SAF paper.
+
+    if(success)
+    {
+      //fprintf(stderr, "Transmitting %s on face[%d]\n", int_to_forward.getName().toUri().c_str(), nextHop);
+      sendInterest(pitEntry, getFaceTable ().get (nextHop));
+      return;
+    }
+
+    engine->logNack((*getFaceTable ().get(nextHop)), pitEntry->getInterest()); // this should be valid we never send the interest as limits forbids it
+    alreadyTriedFaces.push_back (nextHop);
+    nextHop = engine->determineNextHop(int_to_forward, alreadyTriedFaces, fibEntry);
+  }
+
+  for(unsigned int i = 0; i < alreadyTriedFaces.size (); i++)
+  {
+    engine->logRejectedInterest (pitEntry, alreadyTriedFaces.at (i)); // log not satisfied on all tried faces
+  }
+  engine->logRejectedInterest(pitEntry, nextHop);
+  clearKnownFaces(int_to_forward);
+  sendNACKToAllInFaces(pitEntry);
+  rejectPendingInterest(pitEntry);
+}
+
 std::vector<int> SAF::getAllInFaces(shared_ptr<pit::Entry> pitEntry)
 {
   std::vector<int> faces;
@@ -122,6 +164,24 @@ std::vector<int> SAF::getAllInFaces(shared_ptr<pit::Entry> pitEntry)
       faces.push_back((*it).getFace()->getId());
   }
   return faces;
+}
+
+void SAF::sendNACKToAllInFaces(shared_ptr<pit::Entry> pitEntry)
+{
+
+  lp::Nack nack(pitEntry->getInterest());
+  nack.setReason(lp::NackReason::CONGESTION);
+
+  const nfd::pit::InRecordCollection records = pitEntry->getInRecords();
+
+  for(nfd::pit::InRecordCollection::const_iterator it = records.begin (); it!=records.end (); ++it)
+  {
+    auto face = (*it).getFace();
+    if(! face->getScope() == ::ndn::nfd::FaceScope::FACE_SCOPE_LOCAL) 
+    {
+      face->sendNack(nack);
+    }
+  }
 }
 
 std::vector<int> SAF::getAllOutFaces(shared_ptr<pit::Entry> pitEntry)
